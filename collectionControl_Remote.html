@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://unpkg.com/tabulator-tables@5.6.0/dist/css/tabulator.min.css" rel="stylesheet" />
+    <title>Document</title>
+</head>
+
+<body>
+    <div id="collection-table"></div>
+
+    <script type="text/javascript" src="https://unpkg.com/tabulator-tables@5.6.0/dist/js/tabulator.min.js"></script>
+    <script>
+        const paramsString = window.location.search;
+        const searchParams = new URLSearchParams(paramsString);
+
+        const gasID = searchParams.get("gasID");
+        const gasUrl = `https://script.google.com/macros/s/${gasID}/exec`
+
+        window.onload = function () {
+            //Get OBS Collection Data
+            fetch(gasUrl)
+                .then(response => response.json())
+                .then(content => {
+                    console.log(JSON.parse(content))
+                    loadTable(JSON.parse(content).data)
+                }
+                )
+        }
+
+        //Google Apps Script API Post
+        async function postData(bodyData, gasURL) {
+            const now = new Date();
+            const seconds = now.getSeconds();
+            console.log(seconds);
+            bodyData.now = `${now.getMinutes()}:${now.getSeconds()}`;
+            bodyData.row = 1 + seconds;
+            fetch(fullURL, {
+                method: 'POST',
+                // mode:'no-cors',
+                //cache: 'no-cache',
+                // credentials:'omit',
+                // headers:{
+                //     'Content-Type':'application/json'
+                // },
+                redirect: 'follow',
+                body: JSON.stringify(bodyData)
+            })
+                .then(res => res.json())
+                .then(data => {
+                    //document.getElementById("postResults").innerText = JSON.stringify(data);
+                    //console.log("post called",JSON.parse(data))
+                    console.log("post called", data)
+                    //console.log("content",JSON.parse(JSON.parse(data).postData.contents))
+                    //console.log("content:",Object.keys(JSON.parse(JSON.parse(data).postData.contents))[0])
+                })
+        }
+
+
+        function loadTable(d) {
+            let table = new Tabulator("#collection-table", {
+                height: "900px",
+                data: d,
+                dataTree: true,
+                dataTreeStartExpanded: true,
+                columns: [
+                    { title: "Name", field: "name", width: 200, responsive: 0 }, //never hide this column
+                    { title: "visibility", field: "visibility", width: 150 },
+                    { title: "type", field: "type", width: 150, responsive: 2 }, //hide this column first
+
+                ],
+            });
+        }
+    </script>
+</body>
+
+</html>

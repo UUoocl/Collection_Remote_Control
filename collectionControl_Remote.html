@@ -4,14 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://unpkg.com/tabulator-tables@5.6.0/dist/css/tabulator.min.css" rel="stylesheet" />
+    <link href="https://unpkg.com/tabulator-tables@6.3.0/dist/css/tabulator.min.css" rel="stylesheet" />
     <title>Document</title>
 </head>
 
 <body>
     <div id="collection-table"></div>
 
-    <script type="text/javascript" src="https://unpkg.com/tabulator-tables@5.6.0/dist/js/tabulator.min.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
     <script>
         const paramsString = window.location.search;
         const searchParams = new URLSearchParams(paramsString);
@@ -27,52 +27,109 @@
                     console.log(JSON.parse(content))
                     loadTable(JSON.parse(content).data)
                 }
-                )
+            )
         }
-
-        //Google Apps Script API Post
-        async function postData(bodyData, gasURL) {
-            const now = new Date();
-            const seconds = now.getSeconds();
-            console.log(seconds);
-            bodyData.now = `${now.getMinutes()}:${now.getSeconds()}`;
-            bodyData.row = 1 + seconds;
-            fetch(fullURL, {
-                method: 'POST',
-                // mode:'no-cors',
-                //cache: 'no-cache',
-                // credentials:'omit',
-                // headers:{
-                //     'Content-Type':'application/json'
-                // },
-                redirect: 'follow',
-                body: JSON.stringify(bodyData)
-            })
-                .then(res => res.json())
-                .then(data => {
-                    //document.getElementById("postResults").innerText = JSON.stringify(data);
-                    //console.log("post called",JSON.parse(data))
-                    console.log("post called", data)
-                    //console.log("content",JSON.parse(JSON.parse(data).postData.contents))
-                    //console.log("content:",Object.keys(JSON.parse(JSON.parse(data).postData.contents))[0])
-                })
-        }
-
-
+        //limit commands to 1 per second
+        let debounce = false;
+        
         function loadTable(d) {
             let table = new Tabulator("#collection-table", {
+                layout:"fitDataStretch",
                 height: "900px",
                 data: d,
                 dataTree: true,
                 dataTreeStartExpanded: true,
                 columns: [
                     { title: "Name", field: "name", width: 200, responsive: 0 }, //never hide this column
-                    { title: "visibility", field: "visibility", width: 150 },
-                    { title: "type", field: "type", width: 150, responsive: 2 }, //hide this column first
-
+                    { title: "type", field: "type", width: 70, responsive: 2 }, //hide this column first
+                    { title: "visibility", field: "visibility", 
+                        width: 100, cellClick: setVisibility, 
+                        formatter:"tickCross", 
+                        formatterParams:{
+                            allowEmpty:true,
+                        }
+                    },
                 ],
             });
+            
+            table.on("tableBuilt", function () {
+                setCurrentScene("");
+            })
+
+            function setVisibility(e,cell){
+                if(!debounce){
+                    debounce = true;
+                    const rowData = cell.getData();
+                    let cellVisibility = cell.getValue() == !true ? true : false;
+                    if(rowData.type === "Scene"){
+                        setCurrentScene(rowData.name);
+                    }
+                    cell.setValue(cellVisibility)
+                    rowData.visibility = cellVisibility
+                    table.deselectRow();
+                    table.selectRow(table.getRowFromPosition(cell.getRow().getPosition()));
+                    // postData({ 
+                    //     "type": rowData.type, 
+                    //     "visibility": `${cellVisibility}`,
+                    //     "name": rowData.name,
+                    //     "itemID": rowData.itemID})
+                    postData(rowData)
+                }
+            }
+
+            function setCurrentScene(sceneName){
+                let scenes = table.searchData("type", "=", "Scene");
+                scenes.forEach( (scene) => {
+                    if(scene.name !== sceneName){
+                        scene.visibility = "";
+                    }
+                })
+                table.updateData(scenes)
+            }
+
+            //Table row Clicked
+            // table.on("rowClick", function (e, row) {
+            //     console.log("e=index", row.getPosition())
+            //     console.log("e", e)
+            //     console.log("row", row)
+            //     console.log("table", table)
+            //     table.deselectRow();
+            //     table.selectRow(table.getRowFromPosition(row.getPosition()));
+            //     //rowChanged(row)
+            // });
         }
+        async function postData(tableData){
+                bodyData = JSON.parse(JSON.stringify(tableData));
+                const now = new Date();
+                const seconds = now.getSeconds();
+
+                //wait for the next second to start
+                setTimeout(() => {debounce = false;}, 1000 - now.getMilliseconds());
+                
+                // bodyData.now = `${now.getMinutes()}:${now.getSeconds()}`;
+                bodyData.row = 1 + (seconds % 15);
+                bodyData.sheet = "Commands";
+                delete bodyData["_children"];
+                console.log("post content", bodyData)
+                
+                fetch(gasUrl,{
+                    method: 'POST', 
+                    mode:'no-cors',
+                    // cache: 'no-cache',
+                    // credentials:'omit',
+                    // headers:{
+                        //     'Content-Type':'application/json'
+                        // },
+                        redirect:'follow',
+                        body: JSON.stringify(bodyData)
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        console.log("post called",data)
+                    })
+        }
+
+
     </script>
 </body>
 

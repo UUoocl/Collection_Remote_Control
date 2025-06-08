@@ -20,7 +20,7 @@ async function makeTabulatorData() {
       id: tableRow,
       name: `${sceneList.scenes[scene].sceneName}`,
       uuid: sceneList.scenes[scene].sceneUuid,
-      visibility: "Show",
+      visibility: "false",
       type: "Scene",
     });
 
@@ -28,7 +28,7 @@ async function makeTabulatorData() {
       tableRow,
       `${sceneList.scenes[scene].sceneName}`,
       `${sceneList.scenes[scene].sceneUuid}`,
-      "Show",
+      "false",
       "Scene"
     ]);
     tableRow++;
@@ -59,6 +59,7 @@ async function makeTabulatorData() {
             itemID: sources.sceneItems[source].sceneItemId,
             visibility: sources.sceneItems[source].sceneItemEnabled,
             type: "Group",
+            sceneName: `${sceneList.scenes[scene].sceneName}`,
           });
           
           collectionSheets.push([
@@ -95,6 +96,7 @@ async function makeTabulatorData() {
                 itemID: groupSources.sceneItems[source].sceneItemId,
                 visibility: groupSources.sceneItems[source].sceneItemEnabled,
                 type: "Source",
+                sceneName: `${sceneList.scenes[scene].sceneName}`,
               });
               collectionSheets.push([
                 tableRow,
@@ -133,12 +135,13 @@ async function makeTabulatorData() {
                     visibility:
                       sourceFilters.filters[sourceFilter].filterEnabled,
                     type: "Filter",
+                    sourceName:`${sources.sceneItems[source].sourceName}`,
                   });
                   collectionSheets.push([
                     tableRow,
                     `${sourceFilters.filters[sourceFilter].filterName}`,
                     sourceFilters.filters[sourceFilter].filterIndex,
-                    "",
+                    `${sources.sceneItems[source].sourceName}`,
                     sourceFilters.filters[sourceFilter].filterEnabled,
                     "Filter"
                   ]);
@@ -158,6 +161,7 @@ async function makeTabulatorData() {
             itemID: `${sources.sceneItems[source].sceneItemId}`,
             visibility: sources.sceneItems[source].sceneItemEnabled,
             type: "Source",
+            sceneName: `${sceneList.scenes[scene].sceneName}`,
         });
 
           collectionSheets.push([
@@ -194,15 +198,15 @@ async function makeTabulatorData() {
                     name: `${sourceFilters.filters[sourceFilter].filterName}`,
                     uuid: sourceFilters.filters[sourceFilter].filterIndex,
                     itemID: "",
-                    visibility:
-                    sourceFilters.filters[sourceFilter].filterEnabled,
+                    visibility: sourceFilters.filters[sourceFilter].filterEnabled,
                     type: "Filter",
+                    sourceName:`${sources.sceneItems[source].sourceName}`,
                 });
                 collectionSheets.push([
                     tableRow,
                     `${sourceFilters.filters[sourceFilter].filterName}`,
                     sourceFilters.filters[sourceFilter].filterIndex,
-                    "",
+                    `${sources.sceneItems[source].sourceName}`,
                     sourceFilters.filters[sourceFilter].filterEnabled,
                     "Filter",
                 ]);

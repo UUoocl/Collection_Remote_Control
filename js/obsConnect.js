@@ -5,16 +5,19 @@ obs.connected = false;
 window.addEventListener(`ws-details`, async function (event) {
   //event wss details
   console.log("message received: ", event)
-  await connectOBS(event.detail.wssDetails);
+  if(event.detail.hasOwnProperty('wssDetails')){
+    await connectOBS(event.detail.wssDetails);
+  }
 })
 
 //check local storage for OBS Web Socket Details
 //on load, if storage item exists
+let connectCount = 0;
 window.addEventListener('load', async function() {
   if(localStorage.getItem('wssDetails') !== null){
     //try to connect
     console.log("try saved websocket details")
-    connectOBS(JSON.parse(window.localStorage.getItem('wssDetails')));
+    setTimeout(() => connectOBS(JSON.parse(window.localStorage.getItem('wssDetails'))), 5000);
   }
 })
 
@@ -33,7 +36,7 @@ async function connectOBS(wssDetails) {
     return "connected";
   } catch (error) {
     console.error("Failed to connect", error.code, error.message);
-    localStorage.setItem("wssDetails",null)
+    //localStorage.setItem("wssDetails",null)
     return "failed";
   }
   //console.log(`ws://${wssDetails.IP}:${wssDetails.PORT}`);

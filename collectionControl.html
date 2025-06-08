@@ -4,12 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OBS Browser Controls</title>
+    <title>OBS Collection Control</title>
 </head>
 
 <body style="color:aqua">
     <h1>OBS Browser Controls</h1>
-    <p>A browser source the gets instructions from google sheet</p>
+    <p>A browser source the gets instructions from a Google Sheet</p>
     <p id="sheetID">Command SheetID</p>
 
     <!-- OBS WebSocket Server -->
@@ -24,9 +24,11 @@
             const searchParams = new URLSearchParams(paramsString);
             console.log(searchParams)
 
-            let SHEET_ID = searchParams.get("cmdID");
-            let SHEET_TITLE = searchParams.get("cmdName");
-            let SHEET_RANGE = searchParams.get("cmdRange");
+            let SHEET_ID = searchParams.get("sheetID");
+            let SHEET_TITLE = searchParams.get("sheetName");
+            let SHEET_RANGE = searchParams.get("sheetRange");
+            SHEET_TITLE = "Commands"
+            SHEET_RANGE = "A2:A"
             let data;
             let sheetUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=${SHEET_TITLE}&range=${SHEET_RANGE}`;
             let currentData;
@@ -49,8 +51,11 @@
                         //if Sheet values changed
                         if (JSON.stringify(currentData) !== JSON.stringify(data.table.rows)) {
                             //convert new sheet data to an object
+                            console.log("set New Data")
                             const newDataObj = rowsToObject(data.table.rows);
                             // sheet array data to Object
+                            
+                            console.log("set Current Data")
                             const currentDataObj = rowsToObject(currentData);
                             //find changed values
 
@@ -59,132 +64,47 @@
 
                             console.log(newDataObj); // Output: 
 
-                            //run OBS command
-                            //SetCurrentProgramScene, sceneName
-
-                            //SetSceneItemEnabled, sceneItemId
-
-                            //SetSourceFilterEnabled, filterName
-
-
-                            //Color Changed
-                            if (newValues.hasOwnProperty('Color')) {
-                                msg = { setColor: newValues.Color };
-                                await obs.call("CallVendorRequest", {
-                                    vendorName: "obs-browser",
-                                    requestType: "emit_event",
-                                    requestData: {
-                                        event_name: "colorChange",
-                                        event_data: { msg },
-                                    },
-                                });
-
-                            }
-
-                            //Slide Visibity changed 
-                            if (newValues.hasOwnProperty('SlideVisibility')) {
-                                if (newValues.SlideVisibility === "Show") {
-                                    enableSource('TM-Timer-App', 'Browser Agenda Slides')
-                                    enableSource('TM-Timer-App', 'Camera Speaker Segment')
-                                }
-                                else {
-                                    disableSource('TM-Timer-App', 'Browser Agenda Slides')
-                                    setTimeout(() => disableSource('TM-Timer-App', 'Camera Speaker Segment'), 200)
-                                }
-                            }
-
-                            //Camera Changed
-                            if (newValues.hasOwnProperty('Camera')) {
-                                if (newValues.Camera === "Speaker") {
-                                    enableSource('TM-Timer-App', 'Camera Speaker')
-                                }
-                                else {
-                                    disableSource('TM-Timer-App', 'Camera Speaker')
-                                    disableSource('TM-Timer-App', 'Camera Speaker Segment')
-                                    disableSource('TM-Timer-App', 'Browser Agenda Slides')
-                                }
-                            }
-
-                            //Change Slide Content
-                            if (newValues.hasOwnProperty('SlideNumber')) {
-                                //Transition slides when changing sections
-                                if (currentDataObj.SlideVisibility === "Show" && currentDataObj.Camera === "Speaker") {
-                                    msg = { setSection: newValues.SlideNumber };
-                                    await obs.call("CallVendorRequest", {
-                                        vendorName: "obs-browser",
-                                        requestType: "emit_event",
-                                        requestData: {
-                                            event_name: "SlideChange",
-                                            event_data: { msg },
-                                        },
-                                    });
-                                }
-
-                            }
-
-                            //Change lower third Content
-                            if (newValues.hasOwnProperty('lowerThirdSlideNumber')) {
-                                //Transition slides when changing sections
-                                //hide
-                                disableSource('Agenda Scene', 'agenda Lower Thirds^').then(async () =>
-                                //Show
-                                {
-                                    await setTimeout(() => {
-                                        enableSource('Agenda Scene', 'agenda Lower Thirds^')
+                            newValues.forEach( async (value) => {
+                                value = JSON.parse(value)
+                                console.log(value)
+                                console.log(Number(value.itemID), typeof Number(value.itemID))
+                                //run OBS command
+                                switch(value.type){
+                                    //SetCurrentProgramScene, sceneName
+                                    case 'Scene':{
+                                        await obs.call("SetCurrentProgramScene",{sceneName: value.name})
+                                        break;
                                     }
-                                        , 300);
-                                    msg = { setSection: newValues.lowerThirdSlideNumber };
-                                    await obs.call("CallVendorRequest", {
-                                        vendorName: "obs-browser",
-                                        requestType: "emit_event",
-                                        requestData: {
-                                            event_name: "lowerSectionChange",
-                                            event_data: { msg },
-                                        },
-                                    });
-                                }
-                                )
-                            }
-
-                            //Change lower third Content
-                            if (newValues.hasOwnProperty('TimerSection')) {
-                                //Transition slides when changing sections
-                                //hide
-                                disableSource('Agenda Scene', 'agenda Lower Thirds^').then(async () =>
-                                //Show
-                                {
-                                    await setTimeout(() => {
-                                        enableSource('Agenda Scene', 'agenda Lower Thirds^')
+                                    //SetSceneItemEnabled, sceneItemId
+                                    case 'Source':{
+                                        await obs.call("SetSceneItemEnabled",{
+                                            sceneName: value.sceneName,
+                                      		sceneItemId: Number(value.itemID),
+				                            sceneItemEnabled: value.visibility,
+                                        })
+                                        break;
                                     }
-                                        , 300);
-                                    msg = { setSection: newValues.TimerSection };
-                                    await obs.call("CallVendorRequest", {
-                                        vendorName: "obs-browser",
-                                        requestType: "emit_event",
-                                        requestData: {
-                                            event_name: "lowerSectionChange",
-                                            event_data: { msg },
-                                        },
-                                    });
-                                }
-                                )
-                            }
+                                    //SetSourceFilterEnabled, filterName                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
+                                    case 'Filter':{
+                                        await obs.call("SetSourceFilterEnabled",{
+                                            sourceName: value.sourceName,
+                                      		filterName: value.name,
+				                            filterEnabled: value.visibility
+                                        })
+                                        break;
+                                    }
 
-                            // setTimeout(() => obs.call("CallVendorRequest", {
-                            //     vendorName: "obs-browser",
-                            //     requestType: "emit_event",
-                            //     requestData: {
-                            //         event_name: "sheetsData",
-                            //         event_data: { newDataObj },
-                            //     },
-                            // }), 300);
+                                }
+                                                                
+                                
+                            })
                         }
                         //update currentData variable for next comparison
                         currentData = data.table.rows;
                     });
             }
             //fetchData();
-            setInterval(fetchData, 1500);
+            setInterval(fetchData, 1200);
         })
 
         async function enableSource(sceneName, sourceName) {
@@ -218,8 +138,9 @@
         function rowsToObject(sheetRows) {
             const keysLength = Object.keys(sheetRows).length
             const obj = {};
+            console.log(sheetRows)
             for (let i = 0; i < keysLength; i++) {
-                obj[sheetRows[i].c[0].v] = sheetRows[i].c[1].v;
+                obj[sheetRows[i].c[0].v] = sheetRows[i].c[0].v;
             }
             return obj;
         }
@@ -239,22 +160,18 @@
         }
 
         function findChanges(original, modified) {
-            const changes = {};
+            const changes = [];
             console.log("original", original)
             console.log("modified", modified)
 
             for (const key in modified) {
                 if (modified.hasOwnProperty(key)) {
                     if (!original.hasOwnProperty(key) || original[key] !== modified[key]) {
-                        changes[key] = modified[key];
-                        // changes[key] = {
-                        // 	oldValue: original[key],
-                        // 	newValue: modified[key]
-                        // };
+                        changes.push(modified[key]);
                     }
                 }
             }
-            console.log("changes", changes)
+            console.log("changes", typeof changes, changes)
             return changes;
         }
     </script>

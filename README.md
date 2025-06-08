@@ -6,7 +6,7 @@ Change Scenes or toggle Sources and Filters remotely via a webpage.
 
 Copy this Google Sheets 
 
->[Remote Control Collection](https://docs.google.com/spreadsheets/d/1KTHWZehYhwRoK9UJEKUN4DM56qAN1Xw3QTCdkWP_pVs/copy)
+>[Remote Control Collection](https://docs.google.com/spreadsheets/d/1zlZLGXVOu_cS6gaZNq4Bd-XKEPBEz3tYZheYGJnBFyU/copy)
 
 ### Share the sheet
 

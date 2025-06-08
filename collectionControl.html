@@ -76,6 +76,7 @@
                                         break;
                                     }
                                     //SetSceneItemEnabled, sceneItemId
+                                    case 'Group':
                                     case 'Source':{
                                         await obs.call("SetSceneItemEnabled",{
                                             sceneName: value.sceneName,

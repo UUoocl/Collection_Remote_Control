@@ -1,5 +1,7 @@
 # Collection Remote Control
 
+Change Scenes or toggle Sources and Filters remotely via a webpage.    
+
 ## Step 0: Setup Google Sheet
 
 Copy this Google Sheets 
@@ -71,8 +73,15 @@ participant GS as Google Sheet
 
 ## Step 2: Remote Control OBS
 
-Open the [Remote Control Page](https://uuoocl.github.io/Collection_Remote_Control/collectionControl_Remote.html)
+Open the [configuration page](https://uuoocl.github.io/Collection_Remote_Control/), click the "copy Link" button for the Browser Source created in step 1. This page can send messages to the Google Sheet created in step 0.  
 
+OBS will respond to the instructions posted to the Google Sheet. 
+
+In the Remote Control page, click in the "visibility" column to set the Scene, Source, or Filter. 
+
+![](/assets/copyRemoteLink.png)
+
+**Remote control sequence diagram:**
 ```mermaid
 sequenceDiagram
 autonumber

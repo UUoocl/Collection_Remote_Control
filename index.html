@@ -3,14 +3,14 @@
 
 <head>
     <meta charset='utf-8'>
-    <title>Sheets OBS Controls Settings</title>
+    <title>OBS Collection Remote Control Settings</title>
     <meta name='viewport' content='width=device-width, initial-scale=1'>
     <link href="css/style.css" rel="stylesheet" type="text/css" />
 </head>
 
 <body>
     <article class="contents">
-        <h1>Sheets OBS Controls Settings</h1>
+        <h1>OBS Collection Remote Control Settings</h1>
         <h4>Configure OBS launch parameters and Browser source settings</h4>
 
         <section>
@@ -49,25 +49,42 @@
         </section>
         
         <section>
-            <div id="postURL">
-                <h3>Set Google Sheets web app API key</h3>
+            <div id="sheetURL">
+                <h3>Set Google Sheet ID</h3>
                 <form class="form-grid">
-                    <label for="postID">Enter Sheets API ID:</label>
-                    <input type="text" id="postID" name="postID" value="webapp ID" />
+                    <label for="sheetID">Enter Google Sheet ID:</label>
+                    <input type="text" id="sheetID" name="sheetID" value="sheet ID" />
                 </form>
             </div>
         </section>
         
         <section>
+            <div id="postURL">
+                <h3>Set Google Apps Script web app ID</h3>
+                <form class="form-grid">
+                    <label for="gasID">Enter Google Apps Script ID:</label>
+                    <input type="text" id="gasID" name="gasID" value="Apps Script ID" />
+                </form>
+            </div>
+        </section>
+
+        <section>
+            <div id="collectonURLs">
+                <h3>Collection Remote Control Links</h3>
+                <div id="remotes"></div>
+            </div>
+        </section>
+        
+        <section>
             <div id="srvr">
-                <h3>Connect to the OBS WebSocket Server</h3>
+                <h3>Post the OBS Collection Details to Google Sheets</h3>
                 <form class="form-grid">
                     <p></p><input class="form-button" type="button" id="WSconnectButton" value="Connect" />
                 </form>
             </div>
         </section>
 
-        <section>
+        <section hidden>
             <div id="setBrowser">
                 <h3></h3>OBS Browser Sources</h3>
                 <div id="browserSources"></div>
@@ -75,27 +92,23 @@
             </div>
             </div>
         </section>
-        <section>
+        <section hidden>
             <div id="collectionDetails">
                 <h3></h3>OBS Collection</h3>
                 <div id="obsCollection"></div>
-
-            </div>
             </div>
         </section>
         
-        <section>
+        <section hidden>
             <div id="collectionTabulatorFormat">
                 <h3></h3>OBS Collection Tabulator Format</h3>
                 <div id="obsCollectionTabulator"></div>
-
-            </div>
             </div>
         </section>
     </article>
 
     <script src='lib/obs-ws.js'></script>
-    <script src='js/obsConnect.js'></script>
+    <!-- <script src='js/obsConnect.js'></script> -->
     <script src='js/obsCollectionCopy.js'></script>
     <script>
         let wssDetails, configName;
@@ -103,9 +116,9 @@
 
         document.addEventListener("DOMContentLoaded", (event) => {
             // on load get stored launch parameters
-            if (localStorage.getItem("configName")) {
+            if (localStorage.getItem("collectionConfigName")) {
                 getLocalStorageConfigOptions();
-                getLocalStorageConfigValue(localStorage.getItem("configName"))
+            // getLocalStorageConfigValue(localStorage.getItem("collectionConfigName"))
             }
 
             //add button event listeners
@@ -119,19 +132,28 @@
 
             document
                 .getElementById("configName")
-                .addEventListener('input', configSelected);
+                .addEventListener('change', configSelected);
 
             document
                 .getElementById("obsData")
                 .addEventListener('change', obsLaunchCommand);
+            
+            document
+                .getElementById("sheetID")
+                .addEventListener('change', updateCollectionControlLinks);
+            
+            document
+                .getElementById("gasID")
+                .addEventListener('change', updateCollectionControlLinks);
 
-                document
+            document
                 .getElementById("copyCommand")
                 .addEventListener('click', (e) => {
                     console.log(e)
                     copyCode(e.target.id, "obsOpenCommand", e.target.innerText)});
 
             obsLaunchCommand();
+            updateCollectionControlLinks();
         })
         //button functions            
         function openOBS() {
@@ -144,6 +166,16 @@
             } else {
                 window.open(`shortcuts://run-shortcut?name=INPUT-Open_OBS_Profile-Collection-WebSocket&input=text&text=${inputArray}`, "_self");
             }
+        }
+
+        //OBS Collection Remote COntrol Source Url
+        //add a link to the Um counter page
+        function updateCollectionControlLinks(){
+            document.getElementById(`remotes`).innerHTML = `
+            <div><div>OBS Source URL - create a Browser Source in OBS with this URL.<div><button id="obsSourceLink" onclick="copyCode('obsSourceLink', 'sourceLink', 'Copy Link')">Copy Link</button><input type="text" id="sourceLink" value='https://uuoocl.github.io/Collection_Remote_Control/collectionControl.html?sheetID=${document.getElementById("sheetID").value}&gasID=${document.getElementById("gasID").value}')}"/></div>
+            <br/>
+            <div><div>Collection Remote Control Link<div><button id="remoteLink" onclick="copyCode('remoteLink', 'remoteControlLink', 'Copy Link')">Copy Link</button><input type="text" id="remoteControlLink" value='https://uuoocl.github.io/Collection_Remote_Control/collectionControl_Remote.html?sheetID=${document.getElementById("sheetID").value}&gasID=${document.getElementById("gasID").value}')}"/></div>
+            `;
         }
 
         async function wsConnect() {
@@ -165,12 +197,13 @@
                     Port: wssDetails.PORT,
                     obsPW: wssDetails.PW,
                     debugMode: document.getElementById("Debug").checked,
-                    apiID: document.getElementById("postID").value
+                    apiID: document.getElementById("gasID").value,
+                    sheetID: document.getElementById("sheetID").value
                 })
 
-            localStorage.setItem("configName", document.getElementById("configName").value);
+            localStorage.setItem("collectionConfigName", document.getElementById("configName").value);
             const str = JSON.stringify(configMap, replacer)
-            localStorage.setItem("configMap", str);
+            localStorage.setItem("collectionConfigName", str);
 
             await connectOBS(wssDetails)
                 .then(async (result) => {
@@ -182,7 +215,7 @@
 
         function getLocalStorageConfigOptions() {
             //get configurations in local storage
-            configMap = JSON.parse(localStorage.getItem("configMap"), reviver)
+            configMap = JSON.parse(localStorage.getItem("collectionConfigName"), reviver)
 
             for (const key of configMap.keys()) {
                 const parentElement = document.getElementById("configNameValues");
@@ -193,7 +226,7 @@
         }
 
         function getLocalStorageConfigValue(selectedConfig) {
-            //const config = localStorage.getItem(selectedConfig)
+            const config = localStorage.getItem("collectionConfigName")
             //get configurations in local storage
             configItem = configMap.get(selectedConfig);
 
@@ -205,7 +238,8 @@
             document.getElementById("profileName").value = configItem?.profileName;
             document.getElementById("collectionName").value = configItem?.collectionName;
             document.getElementById("Debug").value = configItem?.debugMode;
-            document.getElementById("postID").value = configItem?.apiID;
+            document.getElementById("gasID").value = configItem?.apiID;
+            document.getElementById("sheetID").value = configItem?.sheetID;
         }
 
         function configSelected() {
@@ -230,6 +264,8 @@
                 console.log("Not a valid selection from datalist");
                 //Actions when the input doesn't match any datalist option
             }
+
+            updateCollectionControlLinks();
         }
         
         function obsLaunchCommand(event){
@@ -325,15 +361,16 @@
 
             }
             getBrowserSource();
-            document.getElementById("obsCollection").innerHTML =`
-            <pre><code>${JSON.stringify(collection,null,2)}</code></pre>
-            `;
             
             await makeTabulatorData();
             
-            const postURL = `https://script.google.com/macros/s/${document.getElementById("postID").value}/exec`
+            const postURL = `https://script.google.com/macros/s/${document.getElementById("gasID").value}/exec`
             
             postData({data: `${JSON.stringify(collectionTabulator)}`}, postURL);
+                    
+            document.getElementById("obsCollection").innerHTML =`
+            <pre><code>${JSON.stringify(collection,null,2)}</code></pre>
+            `;
 
             document.getElementById("obsCollectionTabulator").innerHTML =`
             <pre><code>${JSON.stringify(collectionTabulator,null,4)}</code></pre>
@@ -468,6 +505,7 @@
         }
 
     </script>
+    
     <script>
         function replacer(key, value) {
             if (value instanceof Map) {
@@ -489,28 +527,6 @@
             return value;
         }
 
-    </script>
-    <script>
-        obs.on('Identified', async (data) => {
-            console.log('OBS WebSocket successfully identified', data);
-
-            document.getElementById("WSconnectButton").style.background = "#00ff00";
-
-            //get Browser source details
-            getOBScollection();
-
-            //send websocket server connection details to OBS browser sources
-            console.log(wssDetails)
-
-            await obs.call("CallVendorRequest", {
-                vendorName: "obs-browser",
-                requestType: "emit_event",
-                requestData: {
-                    event_name: "ws-details",
-                    event_data: { wssDetails },
-                },
-            });
-        });
     </script>
 
     <script>
@@ -546,6 +562,62 @@
                 //console.log("content:",Object.keys(JSON.parse(JSON.parse(data).postData.contents))[0])
             })
         }
+    </script>
+
+    <script>
+        const obs = new OBSWebSocket();
+        obs.connected = false;
+        
+        async function connectOBS(wssDetails) {
+                //connect to OBS web socket server
+                try {
+                    //avoid duplicate connections
+                    await disconnect();
+
+                    //connect to OBS Web Socket Server
+                    const { obsWebSocketVersion, negotiatedRpcVersion } =
+                        await obs.connect(`ws://${wssDetails.IP}:${wssDetails.PORT}`, wssDetails.PW, { rpcVersion: 1, });
+                    console.log(`Connected to server ${obsWebSocketVersion} (using RPC ${negotiatedRpcVersion})`);
+                    localStorage.setItem("wssDetails", JSON.stringify(wssDetails))
+                    return "connected";
+                } catch (error) {
+                    console.error("Failed to connect", error.code, error.message);
+                    //localStorage.setItem("wssDetails",null)
+                    return "failed";
+                }
+                //console.log(`ws://${wssDetails.IP}:${wssDetails.PORT}`);
+            }
+
+        async function disconnect() {
+            try {
+                await obs.disconnect()
+                console.log("disconnected")
+                obs.connected = false
+            } catch (error) {
+                console.error("disconnect catch", error)
+            }
+        }
+
+        obs.on('Identified', async (data) => {
+            console.log('OBS WebSocket successfully identified', data);
+
+            document.getElementById("WSconnectButton").style.background = "#00ff00";
+
+            //get Browser source details
+            getOBScollection();
+
+            //send websocket server connection details to OBS browser sources
+            console.log(wssDetails)
+
+            await obs.call("CallVendorRequest", {
+                vendorName: "obs-browser",
+                requestType: "emit_event",
+                requestData: {
+                    event_name: "ws-details",
+                    event_data: { wssDetails },
+                },
+            });
+        });
     </script>
 </body>
 

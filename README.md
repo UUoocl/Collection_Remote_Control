@@ -10,7 +10,9 @@ Copy this Google Sheets
 
 ### Share the sheet
 
-  General Access "Anyone with the Link" | Viewer
+- Set the General Access to "Anyone with the Link" can view
+
+- Enter the Sheet ID in the [Collection Remote Control Configuration Page](https://uuoocl.github.io/Collection_Remote_Control/) 
 
 ### Deploy the AppsScript
 
@@ -26,40 +28,51 @@ Open Apps Script Editor
 ### Authorize access
 Apps Scripts need to be authorized for use. 
   - Click 'Authorize Access'
-  ![](/assets/authorizeAccess.png)
+    - ![](/assets/authorizeAccess.png)
+
   - Click 'Advanced'
-  ![](/assets/advanced.png)
+    - ![](/assets/advanced.png)
+  
   - Click 'Go To ...'
-  ![](/assets/goToScript.png)
+    - ![](/assets/goToScript.png)
+  
   - Click 'Allow'
-  ![](/assets/allow.png)
+    - ![](/assets/allow.png)
+  
   - Click 'Copy'
-  ![](/assets/deploymentID.png)
+    - ![](/assets/deploymentID.png)
      
+Enter the Sheet ID in the [Collection Remote Control Configuration Page](https://uuoocl.github.io/Collection_Remote_Control/) 
 
 ## Step 1: Configure OBS
 
-Add a Browser Source 
-- set the URL
-  ```
-  https://uuoocl.github.io/Collection_Remote_Control/collectionControl.html?sheetID={yourSheetID}&gasID={your Google Apps Script Deployment ID}
-  ```
-- Open a Windowed Projector(Source)
-  - right click on the Browser Source
-  ![](/assets/windowedProjector.png)
+Open the [configuration page](https://uuoocl.github.io/Collection_Remote_Control/). 
 
-Configure the OBS WebSocket Server.  The WebSocket Server can be configured using the 
+In the "Collection Remote Control Links" section, click the "copy Link" button for the OBS Browser Source. 
+
+### Add an OBS Browser Source 
+- set the OBS Browser Source URL by pasting the Collection Remote Control link.
+
+### Open a Windowed Projector(Source)
+  - right click on the Browser Source
+    - ![](/assets/windowedProjector.png)
+
+### Configure the OBS WebSocket Server.
+
+The WebSocket Server can be configured using the 
 [configuration page](https://uuoocl.github.io/Collection_Remote_Control/) 
 in this repository or through the OBS user interface. 
 
+## Step 2: Post the OBS Collection to Google Sheets 
+
 In the 
 [configuration page](https://uuoocl.github.io/Collection_Remote_Control/) 
-paste the Google Apps Script Deployment ID, copied from step 0. Then press the "Connect" button.
+ press the "Connect" button.
 
 ![](/assets/setDeploymenytID.png)
 
-
 **Configuration sequence diagram:**
+
 ```mermaid
 sequenceDiagram
 autonumber
@@ -71,15 +84,15 @@ participant GS as Google Sheet
   GH ->> GS: Post Collection
 ```
 
-## Step 2: Remote Control OBS
+## Step 3: Remote Control OBS
 
-Open the [configuration page](https://uuoocl.github.io/Collection_Remote_Control/), click the "copy Link" button for the Browser Source created in step 1. This page can send messages to the Google Sheet created in step 0.  
+Open the [configuration page](https://uuoocl.github.io/Collection_Remote_Control/), click the "copy Link" button for the Collection Remote Control Link
 
-OBS will respond to the instructions posted to the Google Sheet. 
+Paste the Collection Remote Control link in a browser. 
 
 In the Remote Control page, click in the "visibility" column to set the Scene, Source, or Filter. 
 
-![](/assets/copyRemoteLink.png)
+OBS will respond to the instructions posted to the Google Sheet. 
 
 **Remote control sequence diagram:**
 ```mermaid
@@ -92,4 +105,3 @@ participant OBS
 GH ->> GS: Post OBS Command
 OBS <<->> GS: Get Commands
 ```
-
